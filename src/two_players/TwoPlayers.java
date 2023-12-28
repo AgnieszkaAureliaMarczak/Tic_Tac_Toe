@@ -3,204 +3,206 @@ package two_players;
 import java.util.Scanner;
 
 public class TwoPlayers {
-    static int wielkoscPlanszy;
-    static char[][] planszaUzytkownika;
-    static char aktualnySymbol = 'X';
-    static int licznikRuchow = 0;
+    static int boardSize;
+    static char[][] playerBoard;
+    static char currentSymbol = 'X';
+    static int moveCount = 0;
 
     public static void main(String[] args) {
-        wielkoscPlanszy = ustalRozmiarPlanszy();
-        planszaUzytkownika = new char[wielkoscPlanszy][wielkoscPlanszy];
-        boolean wygrana = false;
+        boardSize = establishBoardSize();
+        playerBoard = new char[boardSize][boardSize];
+        boolean win = false;
         do {
-            wydrukujPlansze();
-            boolean poprawnyRuch = wykonajRuch();
-            if (poprawnyRuch) {
-                licznikRuchow++;
-                wygrana = czyWygrana();
-                if (wygrana) {
-                    System.out.println("Brawo. " + aktualnySymbol + " wygrał.");
+            printBoard();
+            boolean correctMove = performMove();
+            if (correctMove) {
+                moveCount++;
+                win = checkIfWon();
+                if (win) {
+                    System.out.println("Brawo. " + currentSymbol + " wygrał.");
                 }
-                aktualnySymbol = aktualnySymbol == 'X' ? 'O' : 'X';
+                currentSymbol = currentSymbol == 'X' ? '0' : 'X';
             } else {
                 System.out.println("Niepoprawny ruch. Spróbuj jeszcze raz.");
             }
 
-        } while (licznikRuchow < wielkoscPlanszy * wielkoscPlanszy && !wygrana);
-        wydrukujPlansze();
+        } while (moveCount < boardSize * boardSize && !win);
+        printBoard();
         System.out.println("Koniec gry :)");
     }
 
-    static int ustalRozmiarPlanszy() {
+    static int establishBoardSize() {
         System.out.println("Podaj rozmiar planszy:");
-        Scanner plansza = new Scanner(System.in);
-        return plansza.nextInt();
+        Scanner board = new Scanner(System.in);
+        return board.nextInt();
     }
 
-    static void wydrukujPlansze() {
+    static void printBoard() {
+        System.out.println();
         System.out.print("\t");
-        for (int i = 0; i < wielkoscPlanszy; i++) {
+        for (int i = 0; i < boardSize; i++) {
             System.out.print(i + " | ");
         }
         System.out.println();
-        for (int wiersz = 0; wiersz < wielkoscPlanszy; wiersz++) {
-            System.out.print(wiersz + ":  ");
-            for (int kolumna = 0; kolumna < wielkoscPlanszy; kolumna++) {
-                char symbol = planszaUzytkownika[wiersz][kolumna];
+        for (int row = 0; row < boardSize; row++) {
+            System.out.print(row + ":  ");
+            for (int column = 0; column < boardSize; column++) {
+                char symbol = playerBoard[row][column];
                 symbol = symbol != 0 ? symbol : ' ';
                 System.out.print(symbol + " | ");
             }
             System.out.println();
         }
+        System.out.println();
     }
 
-    static boolean wykonajRuch() {
-        int[] ruchGracza;
-        ruchGracza = pobierzRuchCzlowieka();
-        int wierszGracza = ruchGracza[0];
-        int kolumnaGracza = ruchGracza[1];
-        if (czyPoprawny(wierszGracza, kolumnaGracza) && czyPustePole(wierszGracza, kolumnaGracza)) {
-            planszaUzytkownika[wierszGracza][kolumnaGracza] = aktualnySymbol;
+    static boolean performMove() {
+        int[] playerMove;
+        playerMove = getMove();
+        int row = playerMove[0];
+        int column = playerMove[1];
+        if (checkIfCorrectMove(row, column) && checkIfEmptySquare(row, column)) {
+            playerBoard[row][column] = currentSymbol;
             return true;
         }
         return false;
     }
 
-    static boolean czyPoprawny(int wiersz, int kolumna) {
-        return wiersz >= 0 && wiersz <= wielkoscPlanszy && kolumna >= 0 && kolumna <= wielkoscPlanszy;
+    static boolean checkIfCorrectMove(int row, int column) {
+        return row >= 0 && row <= boardSize && column >= 0 && column <= boardSize;
     }
 
-    static boolean czyPustePole(int wiersz, int kolumna) {
-        return planszaUzytkownika[wiersz][kolumna] == 0;
+    static boolean checkIfEmptySquare(int row, int column) {
+        return playerBoard[row][column] == 0;
     }
 
-    static int[] pobierzRuchCzlowieka() {
-        int[] pobranaPozycja = new int[2];
-        System.out.println(aktualnySymbol + " twój ruch. \nPodaj numer wiersza.");
-        Scanner wprowadzenie = new Scanner(System.in);
-        int wierszGracza = wprowadzenie.nextInt();
-        pobranaPozycja[0] = wierszGracza;
+    static int[] getMove() {
+        int[] markCoordinates = new int[2];
+        System.out.println(currentSymbol + " twój ruch. \nPodaj numer wiersza.");
+        Scanner scanner = new Scanner(System.in);
+        int row = scanner.nextInt();
+        markCoordinates[0] = row;
         System.out.println("Podaj numer kolumny.");
-        int kolumnaGracza = wprowadzenie.nextInt();
-        pobranaPozycja[1] = kolumnaGracza;
-        return pobranaPozycja;
+        int column = scanner.nextInt();
+        markCoordinates[1] = column;
+        return markCoordinates;
     }
 
-    static boolean czyWygrana() {
-        return czyWygranaWiersze() ||
-                czyWygranaKolumny() ||
-                czyWygranaPrzekatna1() ||
-                czyWygranaPrzekatna2();
+    static boolean checkIfWon() {
+        return checkRows() ||
+                checkColumns() ||
+                checkDiagonal1() ||
+                checkDiagonal2();
     }
 
-    static boolean czyWygranaWiersze() {
-        for (int wiersz = 0; wiersz < planszaUzytkownika.length; wiersz++) {
-            boolean wygrana = true;
-            int iloscTakichSamych = 0;
-            for (int kolumna = 0; kolumna < planszaUzytkownika.length; kolumna++) {
-                if (planszaUzytkownika.length <= 5) {
-                    if (planszaUzytkownika[wiersz][kolumna] != aktualnySymbol) {
-                        wygrana = false;
+    static boolean checkRows() {
+        for (int row = 0; row < playerBoard.length; row++) {
+            boolean win = true;
+            int sameMarkCount = 0;
+            for (int column = 0; column < playerBoard.length; column++) {
+                if (playerBoard.length <= 5) {
+                    if (playerBoard[row][column] != currentSymbol) {
+                        win = false;
                         break;
                     }
                 } else {
-                    if (planszaUzytkownika[wiersz][kolumna] != aktualnySymbol) {
-                        iloscTakichSamych = 0;
-                        wygrana = false;
+                    if (playerBoard[row][column] != currentSymbol) {
+                        sameMarkCount = 0;
+                        win = false;
                     } else {
-                        iloscTakichSamych++;
-                        if (iloscTakichSamych == 5) {
-                            wygrana = true;
+                        sameMarkCount++;
+                        if (sameMarkCount == 5) {
+                            win = true;
                             break;
                         }
                     }
                 }
             }
-            if (wygrana) {
+            if (win) {
                 return true;
             }
         }
         return false;
     }
 
-    static boolean czyWygranaKolumny() {
-        for (int kolumna = 0; kolumna < planszaUzytkownika.length; kolumna++) {
-            boolean wygrana = true;
-            int iloscTakichSamych = 0;
-            for (int wiersz = 0; wiersz < planszaUzytkownika.length; wiersz++) {
-                if (planszaUzytkownika.length <= 5) {
-                    if (planszaUzytkownika[wiersz][kolumna] != aktualnySymbol) {
-                        wygrana = false;
+    static boolean checkColumns() {
+        for (int column = 0; column < playerBoard.length; column++) {
+            boolean win = true;
+            int sameMarkCount = 0;
+            for (int row = 0; row < playerBoard.length; row++) {
+                if (playerBoard.length <= 5) {
+                    if (playerBoard[row][column] != currentSymbol) {
+                        win = false;
                         break;
                     }
                 } else {
-                    if (planszaUzytkownika[wiersz][kolumna] != aktualnySymbol) {
-                        iloscTakichSamych = 0;
-                        wygrana = false;
+                    if (playerBoard[row][column] != currentSymbol) {
+                        sameMarkCount = 0;
+                        win = false;
                     } else {
-                        iloscTakichSamych++;
-                        if (iloscTakichSamych == 5) {
-                            wygrana = true;
+                        sameMarkCount++;
+                        if (sameMarkCount == 5) {
+                            win = true;
                             break;
                         }
                     }
                 }
             }
-            if (wygrana) {
+            if (win) {
                 return true;
             }
         }
         return false;
     }
 
-    static boolean czyWygranaPrzekatna1() {
-        boolean wygrana = true;
-        int iloscTakichSamych = 0;
-        for (int i = 0; i < planszaUzytkownika.length; i++) {
-            if (planszaUzytkownika.length <= 5) {
-                if (planszaUzytkownika[i][i] != aktualnySymbol) {
-                    wygrana = false;
+    static boolean checkDiagonal1() {
+        boolean win = true;
+        int sameMarkCount = 0;
+        for (int i = 0; i < playerBoard.length; i++) {
+            if (playerBoard.length <= 5) {
+                if (playerBoard[i][i] != currentSymbol) {
+                    win = false;
                     break;
                 }
             } else {
-                if (planszaUzytkownika[i][i] != aktualnySymbol) {
-                    iloscTakichSamych = 0;
-                    wygrana = false;
+                if (playerBoard[i][i] != currentSymbol) {
+                    sameMarkCount = 0;
+                    win = false;
                 } else {
-                    iloscTakichSamych++;
-                    if (iloscTakichSamych == 5) {
-                        wygrana = true;
+                    sameMarkCount++;
+                    if (sameMarkCount == 5) {
+                        win = true;
                         break;
                     }
                 }
             }
 
         }
-        return wygrana;
+        return win;
     }
 
-    static boolean czyWygranaPrzekatna2() {
-        boolean wygrana = true;
-        int iloscTakichSamych = 0;
-        for (int i = 0; i < planszaUzytkownika.length; i++) {
-            if (planszaUzytkownika.length <= 5) {
-                if (planszaUzytkownika[i][planszaUzytkownika.length - 1 - i] != aktualnySymbol) {
-                    wygrana = false;
+    static boolean checkDiagonal2() {
+        boolean win = true;
+        int sameMarkCount = 0;
+        for (int i = 0; i < playerBoard.length; i++) {
+            if (playerBoard.length <= 5) {
+                if (playerBoard[i][playerBoard.length - 1 - i] != currentSymbol) {
+                    win = false;
                     break;
                 }
             } else {
-                if (planszaUzytkownika[i][planszaUzytkownika.length - 1 - i] != aktualnySymbol) {
-                    iloscTakichSamych = 0;
-                    wygrana = false;
+                if (playerBoard[i][playerBoard.length - 1 - i] != currentSymbol) {
+                    sameMarkCount = 0;
+                    win = false;
                 } else {
-                    iloscTakichSamych++;
-                    if (iloscTakichSamych == 5) {
-                        wygrana = true;
+                    sameMarkCount++;
+                    if (sameMarkCount == 5) {
+                        win = true;
                         break;
                     }
                 }
             }
         }
-        return wygrana;
+        return win;
     }
 }
