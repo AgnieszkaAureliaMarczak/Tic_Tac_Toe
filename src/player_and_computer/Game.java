@@ -61,7 +61,7 @@ public class Game {
     static boolean performMove() {
         int[] playerMove;
         if (currentSymbol == HUMAN_SYMBOL) {
-            playerMove = getHumanMove();
+            playerMove = HumanAlgorithm.getMove();
         } else {
             playerMove = ComputerAlgorithm.getMove();
         }
@@ -80,18 +80,6 @@ public class Game {
 
     static boolean checkIfEmptySquare(int row, int column) {
         return playerBoard[row][column] == 0;
-    }
-
-    static int[] getHumanMove() {
-        int[] markCoordinates = new int[2];
-        System.out.println(currentSymbol + " twój ruch. \nPodaj numer wiersza.");
-        Scanner scanner = new Scanner(System.in);
-        int row = scanner.nextInt();
-        markCoordinates[0] = row;
-        System.out.println("Podaj numer kolumny.");
-        int column = scanner.nextInt();
-        markCoordinates[1] = column;
-        return markCoordinates;
     }
 
     static boolean checkIfWon() {
